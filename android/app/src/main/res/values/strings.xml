@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">REACTFLOW</string>
+    <string name="app_subtitle">LIVE REACTION RECORDING STUDIO</string>
+    <string name="author_credit">Created by Engineer Daniel Nwalor</string>
+    <string name="home_description">Your space for authentic live reactions.</string>
+</resources>

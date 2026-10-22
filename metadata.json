@@ -1,0 +1,6 @@
+{
+  "name": "REACTFLOW",
+  "description": "Live Reaction Recording Studio created by Engineer Daniel Nwalor. Import videos, manage reaction projects, and preview video playback with professional studio controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
