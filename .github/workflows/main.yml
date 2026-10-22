@@ -2,8 +2,7 @@ name: Build REACTFLOW Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,60 +14,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout REACTFLOW Source
+      - name: Checkout REACTFLOW
         uses: actions/checkout@v4
 
-      - name: Set Up Java 17
+      - name: Set Up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set Up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Grant Gradle Execute Permission
+      - name: Locate Android Project
+        id: locate
+        shell: bash
         run: |
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
+          echo "Repository contents:"
+          ls -la
+
+          if [ -f "./gradlew" ]; then
+            echo "project_root=." >> "$GITHUB_OUTPUT"
+          elif [ -f "./android/gradlew" ]; then
+            echo "project_root=android" >> "$GITHUB_OUTPUT"
           else
-            echo "ERROR: Gradle wrapper (gradlew) was not found."
-            echo "Check that the Android project includes its Gradle wrapper."
+            echo "No Gradle wrapper found."
+            echo "Searching for Gradle project files..."
+            find . -maxdepth 5 \
+              \( -name build.gradle -o -name build.gradle.kts \) \
+              -print
+
+            echo "A valid Gradle wrapper must be generated or restored."
             exit 1
           fi
 
-      - name: Verify Android Project
+      - name: Make Gradle Wrapper Executable
+        shell: bash
         run: |
-          if [ ! -f android/app/build.gradle ] && \
-             [ ! -f android/app/build.gradle.kts ]; then
-            echo "ERROR: Android app Gradle file not found."
-            echo "Expected android/app/build.gradle or build.gradle.kts."
-            exit 1
-          fi
+          chmod +x "${{ steps.locate.outputs.project_root }}/gradlew"
 
-          echo "Android project files found."
-
-      - name: Build REACTFLOW Debug APK
+      - name: Build Debug APK
+        working-directory: ${{ steps.locate.outputs.project_root }}
         run: ./gradlew --no-daemon :app:assembleDebug
-        working-directory: android
 
-      - name: Verify APK
-        run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
-
-          if [ ! -f "$APK" ]; then
-            echo "ERROR: APK was not generated at the expected path."
-            find android -type f -name "*.apk" -print
-            exit 1
-          fi
-
-          echo "APK generated successfully."
-          ls -lh "$APK"
-
-      - name: Upload REACTFLOW Debug APK
+      - name: Upload Debug APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: REACTFLOW-debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            **/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
